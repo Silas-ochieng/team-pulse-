@@ -20,13 +20,17 @@ class CustomLoginView(LoginView):
 # Class-based views for web interface
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
-    success_url = reverse_lazy('login')
-    template_name = 'registration/signup.html'
+    template_name = 'users/signup.html'  # Point to your custom template
+    success_url = reverse_lazy('users:login') # Redirect to login after signup
 
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, 'Account created successfully. Please log in.')
         return response
+    def form_valid(self, form):
+        user = form.save()
+        login(self.request, user)  # Only use if you want auto-login
+        return super().form_valid(form)
 
 # API ViewSets
 class UserViewSet(viewsets.ModelViewSet):

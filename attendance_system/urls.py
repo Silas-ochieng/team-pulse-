@@ -19,6 +19,8 @@ from django.urls import path, include
 from django.views.generic import RedirectView  # Add this import
 from rest_framework.routers import DefaultRouter
 from users.views import UserViewSet
+from django.contrib.auth.views import LogoutView
+
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -26,6 +28,7 @@ router.register(r'users', UserViewSet, basename='user')
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='attendance:dashboard'), name='home'),  # Redirect to the dashboard
     path('', RedirectView.as_view(url='accounts/login/')),
+    path('accounts/logout/', LogoutView.as_view(http_method_names=['get', 'post']), name='logout'),  # Changed from empty path
     path('admin/', admin.site.urls),
     path('attendance/', include(('attendance.urls', 'attendance'), namespace='attendance')),
     path('accounts/', include('django.contrib.auth.urls')),   # Changed from empty path
