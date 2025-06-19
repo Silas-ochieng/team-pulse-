@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">Staff Dashboard</h1>
+
+{% if user.is_superuser %}
+    <div class="text-end mb-4">
+        <a href="{% url 'admin:index' %}" class="btn btn-dark">
+            <i class="fas fa-lock"></i> Admin Panel
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Stats Cards -->
+    <div class="row mt-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h5>Today's Attendance</h5>
+                    <h2>{{ today_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h5>Currently Present</h5>
+                    <h2>{{ currently_present }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Weekly Attendance
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Attendance Status
+                </div>
+                <div class="card-body">
+                    <canvas id="pieChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Attendance -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Recent Attendance Records
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Date</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in recent_attendance %}
+                    <tr>
+                        <td>{{ record.user.get_full_name }}</td>
+                        <td>{{ record.date }}</td>
+                        <td>{{ record.check_in|time }}</td>
+                        <td>{{ record.check_out|time|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Weekly Chart
+    const weeklyCtx = document.getElementById('weeklyChart');
+    new Chart(weeklyCtx, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ dates|escapejs }}'),
+            datasets: [{
+                label: 'Daily Attendance',
+                data: JSON.parse('{{ counts|escapejs }}'),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Pie Chart
+    const pieCtx = document.getElementById('pieChart');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: ['On Time', 'Absent', 'Late'],
+            datasets: [{
+                data: JSON.parse('{{ pie_data|escapejs }}'),
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(255, 205, 86, 0.5)'
+                ],
+                borderWidth: 1
+            }]
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Check-In/Out{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="text-center">Daily Attendance</h3>
+                </div>
+                <div class="card-body text-center">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if today_attendance %}
+                        {% if not today_attendance.check_out %}
+                            <h5>You checked in at: {{ today_attendance.check_in|time }}</h5>
+                            <form method="post" action="{% url 'attendance:check_out' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-lg mt-3">
+                                    Check Out
+                                </button>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <h5>Today's Attendance Complete</h5>
+                                <p>Checked in: {{ today_attendance.check_in|time }}</p>
+                                <p>Checked out: {{ today_attendance.check_out|time }}</p>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <form method="post" action="{% url 'attendance:check_in' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-lg">
+                                Check In
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted text-center">
+                    {{ timezone.now|date:"l, F j, Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
