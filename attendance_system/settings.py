@@ -51,11 +51,16 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+# Add commentMore actions
 
 # Authentication settings
 LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'attendance:dashboard'  # Use the namespace 
 LOGOUT_REDIRECT_URL = 'users:login'  # After logout
+
+# Sessions
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -124,7 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 
 USE_I18N = True
 

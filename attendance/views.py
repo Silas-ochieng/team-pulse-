@@ -5,11 +5,10 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count
 from .models import Attendance
-from django.contrib.auth import get_user_model  # Add this import
+from django.contrib.auth import get_user_model
 import json
 
-# Get the User model
-User = get_user_model()  # Add this line
+User = get_user_model()
 
 @login_required
 def check_in_out_view(request):
@@ -22,7 +21,7 @@ def check_in_out_view(request):
     return render(request, 'attendance/attendance_form.html', {
         'today_attendance': today_attendance
     })
-
+0
 @login_required
 def check_in(request):
     if request.method == 'POST':
@@ -51,7 +50,11 @@ def check_out(request):
             messages.error(request, 'No active check-in found!')
     return redirect('attendance:check_in_out')
 
-@user_passes_test(lambda u: u.is_authenticated and hasattr(u, 'is_staff_user') ) # Safer check
+# Staff-only access to dashboard, redirect others to attendance check_in_out page
+@user_passes_test(
+    lambda u: u.is_authenticated and getattr(u, 'is_staff_user', False),
+    login_url='attendance:check_in_out'
+)
 def dashboard(request):
     today = timezone.now().date()
     week_ago = today - timedelta(days=7)

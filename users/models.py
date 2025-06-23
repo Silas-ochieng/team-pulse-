@@ -1,4 +1,4 @@
-# filepath: attendance_system/users/models.py
+# filepath: attendance_system/users/models.pyAdd commentMore actions
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect #Add commentMore actions
 from django.contrib.auth import login, authenticate, get_user_model  # Added get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -20,17 +20,13 @@ class CustomLoginView(LoginView):
 # Class-based views for web interface
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
-    template_name = 'users/signup.html'  # Point to your custom template
-    success_url = reverse_lazy('users:login') # Redirect to login after signup
+    success_url = reverse_lazy('login')
+    template_name = 'registration/signup.html'
 
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, 'Account created successfully. Please log in.')
         return response
-    def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)  # Only use if you want auto-login
-        return super().form_valid(form)
 
 # API ViewSets
 class UserViewSet(viewsets.ModelViewSet):
