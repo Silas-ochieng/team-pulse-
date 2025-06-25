@@ -2,27 +2,30 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models import CustomUser
+from .forms import CustomUserCreationForm
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'user_type', 'is_staff')
-    list_filter = ('user_type', 'is_staff', 'is_active')
-    search_fields = ('username', 'first_name', 'last_name', 'email')
-    ordering = ('username',)
-    
+    add_form = CustomUserCreationForm
+    list_display = ('username', 'email', 'user_type', 'is_approved', 'is_staff')
+    list_filter = ('user_type', 'is_approved')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'phone_number')}),
-        (_('User Type'), {'fields': ('user_type',)}),
-        (_('Permissions'), {
+        ('Personal info', {'fields': ('email', 'phone_number')}),
+        ('Permissions', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        ('Account Type', {'fields': ('user_type', 'is_approved')}),
     )
-
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'user_type', 'phone_number'),
+            'fields': ('username', 'email', 'phone_number', 'user_type', 'password1', 'password2'),
         }),
     )
+    actions = ['approve_users']
+
+    def approve_users(self, request, queryset):
+        queryset.update(is_approved=True)
+    approve_users.short_description = "Approve selected users"

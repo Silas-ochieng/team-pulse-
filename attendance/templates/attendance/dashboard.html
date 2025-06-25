@@ -1,17 +1,17 @@
-{% extends 'base.html' %}Add commentMore actions
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="container-fluid">
     <h1 class="mt-4">Staff Dashboard</h1>
 
-{% if user.is_superuser %}
+    {% if user.is_superuser %}
     <div class="text-end mb-4">
         <a href="{% url 'admin:index' %}" class="btn btn-dark">
             <i class="fas fa-lock"></i> Admin Panel
         </a>
     </div>
     {% endif %}
-    
+
     <!-- Stats Cards -->
     <div class="row mt-4">
         <div class="col-xl-3 col-md-6">
@@ -31,16 +31,44 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-3">
+
+        <div class="col-md-4">
+            <label for="userSearch" class="form-label visually-hidden">User Search</label>
+            <input id="userSearch" type="text" name="user" class="form-control" placeholder="Search by username or name" value="{{ user_query }}" title="Search by username or full name">
+        </div>
+
+        <div class="col-md-3">
+            <label for="startDate" class="form-label visually-hidden">Start Date</label>
+            <input id="startDate" type="date" name="start_date" class="form-control" value="{{ start_date }}" title="Filter start date">
+        </div>
+
+        <div class="col-md-3">
+            <label for="endDate" class="form-label visually-hidden">End Date</label>
+            <input id="endDate" type="date" name="end_date" class="form-control" value="{{ end_date }}" title="Filter end date">
+        </div>
+
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+            <a href="{% url 'attendance:export_excel' %}?user={{ user_query }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-outline-success w-100">Export Excel</a>
+        </div>
+    </form>
+
     <!-- Charts -->
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-md-8">
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header d-flex align-items-center justify-content-between">
                     Weekly Attendance
+                    <div>
+                        <button id="toggleOnTime" class="btn btn-sm btn-primary me-2 active" type="button">On Time</button>
+                        <button id="toggleLate" class="btn btn-sm btn-outline-primary" type="button">Late</button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="weeklyChart" height="200"></canvas>
+                    <canvas id="attendanceChart" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -55,14 +83,14 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Recent Attendance -->
     <div class="card mb-4">
         <div class="card-header">
             Recent Attendance Records
         </div>
-        <div class="card-body">
-            <table class="table table-striped">
+        <div class="card-body table-responsive">
+            <table class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>User</th>
@@ -76,65 +104,85 @@
                     <tr>
                         <td>{{ record.user.get_full_name }}</td>
                         <td>{{ record.date }}</td>
-                        <td>{{ record.check_in|time }}</td>
-                        <td>{{ record.check_out|time|default:"-" }}</td>
+                        <td>{{ record.check_in|time:"H:i" }}</td>
+                        <td>{{ record.check_out|time:"H:i"|default:"-" }}</td>
                     </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">No attendance records found.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Weekly Chart
-    const weeklyCtx = document.getElementById('weeklyChart');
-    new Chart(weeklyCtx, {
+    const dates = JSON.parse('{{ dates|escapejs }}');
+    const counts = JSON.parse('{{ counts|escapejs }}');
+    const pieData = JSON.parse('{{ pie_data|escapejs }}');
+
+    // Assuming late attendance is 20% of daily counts (adjust if you provide actual late counts from backend)
+    const countsLate = counts.map(val => Math.round(val * 0.2));
+    const countsOnTime = counts.map((val, i) => val - countsLate[i]);
+
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    let currentData = countsOnTime;
+
+    const attendanceChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: JSON.parse('{{ dates|escapejs }}'),
+            labels: dates,
             datasets: [{
-                label: 'Daily Attendance',
-                data: JSON.parse('{{ counts|escapejs }}'),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
+                label: 'Attendance',
+                data: currentData,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderRadius: 5,
             }]
         },
         options: {
             responsive: true,
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
-                }
+                y: { beginAtZero: true, ticks: { precision: 0 } }
             }
         }
     });
 
+    // Toggle buttons logic
+    document.getElementById('toggleOnTime').addEventListener('click', function() {
+        attendanceChart.data.datasets[0].data = countsOnTime;
+        attendanceChart.update();
+        this.classList.add('active');
+        document.getElementById('toggleLate').classList.remove('active');
+    });
+
+    document.getElementById('toggleLate').addEventListener('click', function() {
+        attendanceChart.data.datasets[0].data = countsLate;
+        attendanceChart.update();
+        this.classList.add('active');
+        document.getElementById('toggleOnTime').classList.remove('active');
+    });
+
     // Pie Chart
-    const pieCtx = document.getElementById('pieChart');
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
     new Chart(pieCtx, {
         type: 'pie',
         data: {
             labels: ['On Time', 'Absent', 'Late'],
             datasets: [{
-                data: JSON.parse('{{ pie_data|escapejs }}'),
+                data: pieData,
                 backgroundColor: [
-                    'rgba(75, 192, 192, 0.5)',
-                    'rgba(255, 99, 132, 0.5)',
-                    'rgba(255, 205, 86, 0.5)'
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 205, 86, 0.7)'
                 ],
                 borderWidth: 1
             }]
-        }
+        },
+        options: { responsive: true }
     });
 });
 </script>

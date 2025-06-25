@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Welcome to the Staff Dashboard</h3>
+        </div>
+        <div class="card-body">
+            <p>Hello, <strong>{{ request.user.get_full_name }}</strong> ({{ request.user.username }})</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center border-info">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Users</h5>
+                            <p class="card-text">View and manage user accounts</p>
+                            <a href="{% url 'users:user_list' %}" class="btn btn-outline-info btn-sm">Go</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center border-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Attendance Overview</h5>
+                            <p class="card-text">View attendance records</p>
+                            <a href="{% url 'attendance:check_in_out' %}" class="btn btn-outline-success btn-sm">Go</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center border-secondary">
+                        <div class="card-body">
+                            <h5 class="card-title">My Profile</h5>
+                            <p class="card-text">Update your profile</p>
+                            <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary btn-sm">Go</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-end">
+                <a href="{% url 'users:logout' %}" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

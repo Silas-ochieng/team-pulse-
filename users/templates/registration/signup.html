@@ -14,20 +14,64 @@
                     <form method="post" novalidate>
                         {% csrf_token %}
 
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                                {% endif %}
-                                {% for error in field.errors %}
-                                    <div class="text-danger">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
+                        <!-- Custom field ordering with better visual grouping -->
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                            {{ form.username }}
+                            {% for error in form.username.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.user_type.id_for_label }}" class="form-label">Account Type</label>
+                            {{ form.user_type }}
+                            {% for error in form.user_type.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            <small class="form-text text-muted">
+                                Staff accounts require admin approval before access
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            {{ form.phone_number }}
+                            {% for error in form.phone_number.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+                            {{ form.password1 }}
+                            {% for error in form.password1.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                            {% if form.password1.help_text %}
+                                <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">Password Confirmation</label>
+                            {{ form.password2 }}
+                            {% for error in form.password2.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </button>
                     </form>
                 </div>
                 <div class="card-footer text-center">
@@ -37,4 +81,36 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeSelect = document.querySelector('#id_user_type');
+    const form = document.querySelector('form');
+    
+    // Highlight account type field if not selected
+    form.addEventListener('submit', function(e) {
+        if (userTypeSelect.value === '') {
+            e.preventDefault();
+            userTypeSelect.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'text-danger mt-1';
+            errorDiv.textContent = 'Please select an account type';
+            userTypeSelect.parentNode.appendChild(errorDiv);
+        }
+    });
+    
+    // Remove error when user selects an option
+    userTypeSelect.addEventListener('change', function() {
+        if (this.value !== '') {
+            this.classList.remove('is-invalid');
+            const errorDiv = this.parentNode.querySelector('.text-danger');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

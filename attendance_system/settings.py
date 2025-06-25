@@ -64,6 +64,8 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

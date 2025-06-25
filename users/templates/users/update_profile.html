@@ -16,6 +16,9 @@
                         {{ form.as_p }}
                         <button type="submit" class="btn btn-primary w-100">Update</button>
                     </form>
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="img-thumbnail mt-2" width="150">
+                    {% endif %}
                 </div>
                 <div class="card-footer text-center">
                     <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary">

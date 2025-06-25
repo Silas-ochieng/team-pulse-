@@ -15,6 +15,14 @@ urlpatterns = [
     path('profile/update/', views.update_profile, name='update_profile'),
 
      # Staff-only view
-    path('list/', views.user_list, name='user_list'), ] # Changed from 'users/'
+    path('dashboard/', views.staff_dashboard, name='dashboard'),
+    path('list/', views.user_list, name='user_list'),
+    path('profile/password/', auth_views.PasswordChangeView.as_view(
+        template_name='registration/password_change_form.html'
+    ), name='password_change'),
+    path('profile/password/done/', auth_views.PasswordChangeDoneView.as_view(
+        template_name='registration/password_change_done.html'
+    ), name='password_change_done'), 
+    path('approve-staff/<int:user_id>/', views.approve_staff, name='approve_staff'),] # Changed from 'users/'
 # This URL pattern is for listing all users, accessible only to staff members
 # The view will check if the user is a staff member before displaying the list
