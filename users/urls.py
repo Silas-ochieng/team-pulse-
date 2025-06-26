@@ -12,6 +12,7 @@ urlpatterns = [
     # User management
     path('signup/', views.SignUpView.as_view(), name='signup'),
     path('profile/', views.profile_view, name='profile'),
+    path('profile/<int:user_id>/', views.profile_view, name='profile'), 
     path('profile/update/', views.update_profile, name='update_profile'),
 
      # Staff-only view
@@ -25,5 +26,6 @@ urlpatterns = [
     ), name='password_change_done'), 
     path('pending-approvals/', views.pending_approvals, name='pending_approvals'),
     path('approve-staff/<int:user_id>/', views.approve_staff, name='approve_staff'),] # Changed from 'users/'
+     # For specific user
 # This URL pattern is for listing all users, accessible only to staff members
 # The view will check if the user is a staff member before displaying the list

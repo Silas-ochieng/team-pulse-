@@ -3,7 +3,8 @@ from django.contrib.auth import login as auth_login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions,permissions 
+from django.core.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.views.generic import CreateView
@@ -92,9 +93,17 @@ class UserViewSet(viewsets.ModelViewSet):
 
 # Profile Views
 @login_required
-def profile_view(request):
-    return render(request, 'users/profile.html', {'user': request.user})
-
+def profile_view(request, user_id=None):
+    # If no user_id provided, show the current user's profile
+    profile_user = get_object_or_404(User, id=user_id) if user_id else request.user
+    
+    # Check if the requesting user has permission to view this profile
+    if not (request.user.is_staff_user() or request.user == profile_user):
+        raise PermissionDenied
+    
+    return render(request, 'users/profile.html', {
+        'profile_user': profile_user
+    })
 @login_required
 def update_profile(request):
     if request.method == 'POST':
