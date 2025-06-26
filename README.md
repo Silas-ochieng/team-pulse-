@@ -17,11 +17,3 @@ source venv/bin/activate  # Linux/Mac | venv\Scripts\activate (Windows)
 pip install -r requirements.txt
 
 
-contributors
-1. Silas
-2. Bakari
-3. Nasser
-4. Brenda
-5. Mwanapwani
-6. Salim
-7. Hemed
