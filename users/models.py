@@ -23,3 +23,12 @@ class CustomUser(AbstractUser):
     @property
     def needs_approval(self):
         return self.user_type == 'staff' and not self.is_approved
+    @property
+    def status(self):
+        if self.is_superuser:
+            return "Administrator"
+        if self.is_staff_user():
+            return "Staff Member"
+        if self.user_type == 'staff' and not self.is_approved:
+            return "Pending Staff Approval"
+        return "Community Member"

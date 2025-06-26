@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
@@ -21,9 +22,6 @@ class SignUpView(CreateView):
     template_name = 'registration/signup.html'
     success_url = reverse_lazy('login')
 
-
-from django.urls import reverse
-
 class CustomLoginView(LoginView):
     template_name = 'users/login.html'
     redirect_authenticated_user = True
@@ -38,44 +36,34 @@ class CustomLoginView(LoginView):
 
     def get_success_url(self):
         user = self.request.user
-        if not user.is_authenticated:
-            return reverse('users:login')
-            
-        # Redirect staff to dashboard
-        if user.is_staff_user():  # This checks both user_type and is_approved
-            return reverse('attendance:dashboard')  # Make sure this URL name is correct
-            
-        # Default redirect for other users
+        if user.is_staff_user():
+            return reverse('attendance:dashboard')
+        elif user.is_community_member():
+            return reverse('attendance:check_in_out')
         return reverse('users:profile')
 
 def signup(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            # Set appropriate flags based on user type
             if user.user_type == 'staff':
-                messages.success(
-                    request,
-                    'Your staff account has been created and is pending admin approval. '
-                    'You will be notified when your account is activated.'
-                )
-                return redirect('users:login')
+                user.is_approved = False  # Requires admin approval
+                user.is_staff = False     # Don't give admin access yet
+                messages.success(request, 'Staff account created. Pending approval.')
             else:
-                # Auto-login community member
+                user.is_approved = True   # Auto-approve community members
+                user.is_staff = False
+                messages.success(request, 'Community account created!')
                 auth_login(request, user)
-                messages.success(
-                    request,
-                    'Your community account has been created successfully!'
-                )
                 return redirect('attendance:check_in_out')
+            user.save()
+            return redirect('users:login')
     else:
         form = CustomUserCreationForm()
 
-    return render(request, 'registration/signup.html', {
-        'form': form,
-        'title': 'Sign Up'
-    })
-
+    return render(request, 'registration/signup.html', {'form': form, 'title': 'Sign Up'})
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
@@ -102,13 +90,10 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+# Profile Views
 @login_required
 def profile_view(request):
-    return render(request, 'users/profile.html', {
-        'user': request.user
-    })
-
+    return render(request, 'users/profile.html', {'user': request.user})
 
 @login_required
 def update_profile(request):
@@ -120,51 +105,38 @@ def update_profile(request):
             return redirect('users:profile')
     else:
         form = CustomUserChangeForm(instance=request.user)
+    return render(request, 'users/update_profile.html', {'form': form})
 
-    return render(request, 'users/update_profile.html', {
-        'form': form
-    })
-
-
-@login_required
-def user_list(request):
-    if not request.user.is_staff_user():
-        messages.error(request, 'Access denied. Staff only.')
-        return redirect('users:profile')
-
-    users = User.objects.all()
-    return render(request, 'users/user_list.html', {
-        'users': users
-    })
-
-
+# Staff Management Views
 @login_required
 def staff_dashboard(request):
-    if not request.user.is_staff_user():  # Now checks both user_type AND is_approved
+    if not request.user.is_staff_user():
         messages.error(request, 'Access restricted to approved staff members')
         return redirect('users:profile')
     return render(request, 'users/staff_dashboard.html')
 
-    
-@login_required
-def user_list(request):
-    if not request.user.is_superuser:  # Only superusers can approve staff
-        messages.error(request, 'Permission denied')
-        return redirect('users:profile')
-    
-    pending_staff = CustomUser.objects.filter(user_type='staff', is_approved=False)
-    return render(request, 'users/user_list.html', {
+@staff_member_required
+def pending_approvals(request):
+    pending_staff = CustomUser.objects.filter(
+        user_type='staff', 
+        is_approved=False
+    ).order_by('date_joined')
+    return render(request, 'users/pending_approvals.html', {
         'pending_staff': pending_staff
     })
-@login_required
+
+@staff_member_required
 def approve_staff(request, user_id):
-    if not request.user.is_superuser:
-        messages.error(request, 'Permission denied')
-        return redirect('users:profile')
-    
     user = get_object_or_404(CustomUser, id=user_id, user_type='staff')
     user.is_approved = True
     user.save()
     
     messages.success(request, f'{user.username} has been approved as staff!')
-    return redirect('users:user_list')
+    return redirect('users:pending_approvals')
+@login_required
+def user_list(request):
+    if not request.user.is_staff_user():
+        messages.error(request, 'Access denied. Staff only.')
+        return redirect('users:profile')
+    users = CustomUser.objects.all()
+    return render(request, 'users/user_list.html', {'users': users})

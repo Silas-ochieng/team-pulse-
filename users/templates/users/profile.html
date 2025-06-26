@@ -13,4 +13,22 @@
         </div>
     </div>
 </div>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Account Status</h5>
+        {% if user.is_staff_user %}
+            <p class="text-success">✓ Approved Staff Member</p>
+        {% elif user.user_type == 'staff' and not user.is_approved %}
+            <p class="text-warning">⏳ Staff application pending approval</p>
+        {% else %}
+            <p class="text-info">Community Member</p>
+        {% endif %}
+        
+        {% if user.is_staff_user or user.is_community_member %}
+            <a href="{% url 'attendance:check_in_out' %}" class="btn btn-primary">
+                Go to Attendance
+            </a>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

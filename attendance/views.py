@@ -12,6 +12,15 @@ from django.http import HttpResponse
 
 User = get_user_model()
 
+def community_or_staff_required(view_func):
+    @login_required
+    def _wrapped_view(request, *args, **kwargs):
+        if not (request.user.is_community_member() or request.user.is_staff_user()):
+            messages.error(request, "Access denied")
+            return redirect('users:profile')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
 # Community-only: Check-in/out page
 @login_required
 def check_in_out_view(request):
@@ -69,10 +78,9 @@ def check_out(request):
 # Staff-only dashboard
 @login_required
 def dashboard(request):
-    if not hasattr(request.user, "is_staff_user") or not request.user.is_staff_user():
-        messages.error(request, "You do not have access to this page.")
-        logout(request)
-        return redirect('users:login')
+    if not request.user.is_staff_user():
+        messages.error(request, "Staff access required")
+        return redirect('users:profile')
     today = timezone.now().date()
     week_ago = today - timedelta(days=7)
 

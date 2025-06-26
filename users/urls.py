@@ -23,6 +23,7 @@ urlpatterns = [
     path('profile/password/done/', auth_views.PasswordChangeDoneView.as_view(
         template_name='registration/password_change_done.html'
     ), name='password_change_done'), 
+    path('pending-approvals/', views.pending_approvals, name='pending_approvals'),
     path('approve-staff/<int:user_id>/', views.approve_staff, name='approve_staff'),] # Changed from 'users/'
 # This URL pattern is for listing all users, accessible only to staff members
 # The view will check if the user is a staff member before displaying the list

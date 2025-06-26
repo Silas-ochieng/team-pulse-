@@ -9,3 +9,9 @@ class Attendance(models.Model):
     
     class Meta:
         unique_together = ['user', 'date']
+    class Meta:
+        ordering = ['-date', '-check_in']
+        verbose_name_plural = 'Attendance Records'
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}"
